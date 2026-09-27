@@ -26,13 +26,8 @@ jobs:
         uses: android-actions/setup-android@v3
         with:
           cmdline-tools-version: 12266719
-          accept-android-sdk-licenses: false
-
-      - name: Aceitar licencas Android
-        shell: bash
-        run: |
-          set -o pipefail
-          yes | sdkmanager --licenses
+          accept-android-sdk-licenses: true
+          packages: platform-tools
 
       - name: Instalar componentes Android
         run: |
