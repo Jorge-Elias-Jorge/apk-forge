@@ -87,7 +87,9 @@ jobs:
                   versionName '1.0'
               }
           }
-          EOF          cat > app/src/main/AndroidManifest.xml <<'EOF'
+          EOF
+
+          cat > app/src/main/AndroidManifest.xml <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
