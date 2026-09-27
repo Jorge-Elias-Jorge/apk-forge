@@ -89,85 +89,261 @@ jobs:
           }
           EOF
 
-          cat > app/src/main/AndroidManifest.xml <<'EOF'
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-              <application
-                  android:label="APK Forge Teste"
-                  android:theme="@android:style/Theme.Material.Light.NoActionBar"
-                  android:usesCleartextTraffic="true">
-
-                  <activity
-                      android:name=".MainActivity"
-                      android:exported="true">
-
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN" />
-                          <category android:name="android.intent.category.LAUNCHER" />
-                      </intent-filter>
-
-                  </activity>
-              </application>
-          </manifest>
-          EOF
-
-          cat > app/src/main/java/com/jorge/apkforgetest/MainActivity.java <<'EOF'
-          package com.jorge.apkforgetest;
-
-          import android.app.Activity;
-          import android.os.Bundle;
-          import android.webkit.WebView;
-          import android.webkit.WebSettings;
-
-          public class MainActivity extends Activity {
-              @Override
-              protected void onCreate(Bundle savedInstanceState) {
-                  super.onCreate(savedInstanceState);
-
-                  WebView webView = new WebView(this);
-                  WebSettings settings = webView.getSettings();
-                  settings.setJavaScriptEnabled(true);
-                  settings.setDomStorageEnabled(true);
-
-                  setContentView(webView);
-                  webView.loadUrl("file:///android_asset/index.html");
-              }
-          }
-          EOF
-
           cat > app/src/main/assets/index.html <<'EOF'
           <!DOCTYPE html>
           <html lang="pt">
           <head>
-              <meta charset="UTF-8">
-              <meta name="viewport"
-                    content="width=device-width, initial-scale=1">
-              <title>APK Forge</title>
-              <style>
-                  body {
-                      font-family: Arial, sans-serif;
-                      background: #101114;
-                      color: white;
-                      text-align: center;
-                      padding: 40px 20px;
-                  }
-                  .card {
-                      max-width: 400px;
-                      margin: 50px auto;
-                      padding: 25px;
-                      background: #202127;
-                      border-radius: 18px;
-                  }
-                  h1 { color: #69a7ff; }
-                  .ok {
-                      color: #54df91;
-                      font-weight: bold;
-                  }
-              </style>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>APK Forge</title>
+            <style>
+              * { box-sizing: border-box; }
+              body {
+                margin: 0;
+                font-family: Arial, sans-serif;
+                background: #101114;
+                color: #fff;
+              }
+              header {
+                padding: 20px;
+                background: #191a20;
+                border-bottom: 1px solid #30313a;
+              }
+              h1 { color: #69a7ff; margin: 0; }
+              header p { color: #aaa; margin-bottom: 0; }
+              nav {
+                display: flex;
+                gap: 8px;
+                padding: 12px;
+                overflow-x: auto;
+                background: #191a20;
+              }
+              nav button {
+                flex: 1;
+                min-width: 100px;
+                padding: 12px 8px;
+                border: 0;
+                border-radius: 10px;
+                background: #292a32;
+                color: white;
+                font-weight: bold;
+              }
+              nav button.active {
+                background: #3478f6;
+              }
+              main { padding: 16px; }
+              .panel {
+                background: #1d1e25;
+                border: 1px solid #30313a;
+                padding: 18px;
+                border-radius: 16px;
+                margin-bottom: 16px;
+              }
+              h2 { margin-top: 0; }
+              label {
+                display: block;
+                margin: 14px 0 6px;
+                color: #c7c7d0;
+              }
+              input, select {
+                width: 100%;
+                padding: 13px;
+                border-radius: 9px;
+                border: 1px solid #41424c;
+                background: #111218;
+                color: white;
+                font-size: 16px;
+              }
+              .primary {
+                width: 100%;
+                padding: 15px;
+                margin-top: 16px;
+                background: #3478f6;
+                color: white;
+                border: 0;
+                border-radius: 10px;
+                font-size: 16px;
+                font-weight: bold;
+              }
+              .secondary {
+                background: #30313a;
+                color: white;
+                border: 0;
+                border-radius: 9px;
+                padding: 10px 14px;
+              }
+              .hint {
+                color: #aaa;
+                font-size: 13px;
+                line-height: 1.5;
+              }
+              .item {
+                padding: 12px;
+                margin-top: 10px;
+                background: #292a32;
+                border-radius: 10px;
+                overflow-wrap: anywhere;
+              }
+              .hidden { display: none; }
+              #status { color: #72e6a0; margin-top: 12px; }
+            </style>
           </head>
           <body>
-              <div class="card">
-                  <h1>APK Forge</h1>
-                  <p>Primeira aplicação Android</p>
+            <header>
+              <h1>APK Forge</h1>
+              <p>Transforma os teus projetos web em aplicações Android.</p>
+            </header>
+
+            <nav>
+              <button class="active" onclick="showTab('novo',this)">Novo projeto</button>
+              <button onclick="showTab('projetos',this)">Meus projetos</button>
+              <button onclick="showTab('builds',this)">Compilações</button>
+              <button onclick="showTab('settings',this)">Configurações</button>
+            </nav>
+
+            <main>
+              <section id="novo">
+                <div class="panel">
+                  <h2>Novo projeto</h2>
+                  <p class="hint">Seleciona um ficheiro HTML ou ZIP do teu site.</p>
+
+                  <label>Nome da aplicação</label>
+                  <input id="appName" placeholder="Ex.: Meu Aplicativo">
+
+                  <label>Identificador do pacote</label>
+                  <input id="packageId" value="com.jorge.meuapp">
+
+                  <label>Versão</label>
+                  <input id="version" value="1.0">
+
+                  <label>Orientação</label>
+                  <select id="orientation">
+                    <option value="portrait">Vertical</option>
+                    <option value="landscape">Horizontal</option>
+                    <option value="unspecified">Automática</option>
+                  </select>
+
+                  <label>Ficheiro HTML ou ZIP</label>
+                  <input id="projectFile" type="file" accept=".html,.htm,.zip">
+
+                  <label>Ícone (opcional)</label>
+                  <input id="iconFile" type="file" accept="image/png,image/jpeg">
+
+                  <button class="primary" onclick="saveProject()">Guardar projeto</button>
+                  <p id="status"></p>
+                </div>
+              </section>
+
+              <section id="projetos" class="hidden">
+                <div class="panel">
+                  <h2>Meus projetos</h2>
+                  <div id="projectList">Ainda não existem projetos guardados.</div>
+                </div>
+              </section>
+
+              <section id="builds" class="hidden">
+                <div class="panel">
+                  <h2>Compilações</h2>
+                  <p class="hint">
+                    As compilações personalizadas ainda precisam de ser ligadas
+                    ao serviço de construção do GitHub Actions.
+                  </p>
+                  <div id="buildList">Nenhuma compilação registada.</div>
+                </div>
+              </section>
+
+              <section id="settings" class="hidden">
+                <div class="panel">
+                  <h2>Configurações</h2>
+                  <p class="hint">
+                    Os projetos guardados nesta versão ficam no armazenamento
+                    local da aplicação.
+                  </p>
+                  <button class="secondary" onclick="clearProjects()">
+                    Apagar lista de projetos
+                  </button>
+                </div>
+              </section>
+            </main>
+
+            <script>
+              let projects = [];
+
+              try {
+                projects = JSON.parse(localStorage.getItem('apkforge_projects') || '[]');
+              } catch(e) {
+                projects = [];
+              }
+
+              function showTab(id, button) {
+                document.querySelectorAll('main section').forEach(
+                  section => section.classList.add('hidden')
+                );
+                document.getElementById(id).classList.remove('hidden');
+
+                document.querySelectorAll('nav button').forEach(
+                  btn => btn.classList.remove('active')
+                );
+                button.classList.add('active');
+
+                if (id === 'projetos') renderProjects();
+              }
+
+              function saveProject() {
+                const name = document.getElementById('appName').value.trim();
+                const packageId = document.getElementById('packageId').value.trim();
+                const version = document.getElementById('version').value.trim();
+                const file = document.getElementById('projectFile').files[0];
+                const icon = document.getElementById('iconFile').files[0];
+                const status = document.getElementById('status');
+
+                if (!name || !file) {
+                  status.textContent = 'Preenche o nome e seleciona um ficheiro.';
+                  return;
+                }
+
+                const project = {
+                  id: Date.now(),
+                  name,
+                  packageId,
+                  version,
+                  orientation: document.getElementById('orientation').value,
+                  fileName: file.name,
+                  fileSize: file.size,
+                  iconName: icon ? icon.name : ''
+                };
+
+                projects.push(project);
+                localStorage.setItem('apkforge_projects', JSON.stringify(projects));
+
+                status.textContent =
+                  'Projeto registado. A compilação personalizada ainda não está ligada.';
+
+                document.getElementById('appName').value = '';
+                document.getElementById('projectFile').value = '';
+                document.getElementById('iconFile').value = '';
+              }
+
+              function renderProjects() {
+                const list = document.getElementById('projectList');
+
+                if (!projects.length) {
+                  list.textContent = 'Ainda não existem projetos guardados.';
+                  return;
+                }
+
+                list.innerHTML = '';
+
+                projects.forEach(project => {
+                  const item = document.createElement('div');
+                  item.className = 'item';
+
+                  const title = document.createElement('strong');
+                  title.textContent = project.name;
+
+                  const details = document.createElement('p');
+                  details.className = 'hint';
+                  
                   <p class="ok">Compilação concluída!</p>
                   <p>Esta página HTML está a funcionar
                      dentro de uma aplicação Android.</p>
