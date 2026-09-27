@@ -171,3 +171,12 @@ jobs:
                   <p class="ok">Compilação concluída!</p>
                   <p>Esta página HTML está a funcionar
                      dentro de uma aplicação Android.</p>
+
+      - name: Guardar APK para download
+        uses: actions/upload-artifact@v4
+        with:
+          name: APK-Forge-Teste
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 7
+
