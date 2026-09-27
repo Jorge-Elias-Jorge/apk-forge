@@ -1,5 +1,4 @@
-
-name: APK Forge - Preparar compilador Android
+name: APK Forge - Primeiro APK
 
 on:
   workflow_dispatch:
@@ -8,12 +7,12 @@ permissions:
   contents: read
 
 jobs:
-  preparar-compilador:
-    name: Preparar ferramentas Android
+  build:
+    name: Construir APK de teste
     runs-on: ubuntu-latest
 
     steps:
-      - name: Obter os ficheiros do projeto
+      - name: Obter ficheiros
         uses: actions/checkout@v4
 
       - name: Instalar Java 17
@@ -38,16 +37,137 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Verificar Java
-        run: java -version
-
-      - name: Verificar Android SDK
-        run: sdkmanager --version
-
-      - name: Verificar Gradle
-        run: gradle --version
-
-      - name: Confirmar ferramentas
+      - name: Criar projeto Android
+        shell: bash
         run: |
-          echo "APK Forge: ferramentas verificadas."
-          echo "Java, Android SDK e Gradle estao disponiveis."
+          mkdir -p app/src/main/java/com/jorge/apkforgetest
+          mkdir -p app/src/main/assets
+
+          cat > settings.gradle <<'EOF'
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+
+          rootProject.name = "APKForgeTest"
+          include ':app'
+          EOF
+
+          cat > build.gradle <<'EOF'
+          plugins {
+              id 'com.android.application' version '8.7.3' apply false
+          }
+          EOF
+
+          cat > app/build.gradle <<'EOF'
+          plugins {
+              id 'com.android.application'
+          }
+
+          android {
+              namespace 'com.jorge.apkforgetest'
+              compileSdk 35
+
+              defaultConfig {
+                  applicationId 'com.jorge.apkforgetest'
+                  minSdk 23
+                  targetSdk 35
+                  versionCode 1
+                  versionName '1.0'
+              }
+          }
+          EOF
+
+          cat > app/src/main/AndroidManifest.xml <<'EOF'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <application
+                  android:label="APK Forge Teste"
+                  android:theme="@android:style/Theme.Material.Light.NoActionBar"
+                  android:usesCleartextTraffic="true">
+
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true">
+
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+
+                  </activity>
+              </application>
+          </manifest>
+          EOF
+
+          cat > app/src/main/java/com/jorge/apkforgetest/MainActivity.java <<'EOF'
+          package com.jorge.apkforgetest;
+
+          import android.app.Activity;
+          import android.os.Bundle;
+          import android.webkit.WebView;
+          import android.webkit.WebSettings;
+
+          public class MainActivity extends Activity {
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+
+                  WebView webView = new WebView(this);
+                  WebSettings settings = webView.getSettings();
+                  settings.setJavaScriptEnabled(true);
+                  settings.setDomStorageEnabled(true);
+
+                  setContentView(webView);
+                  webView.loadUrl("file:///android_asset/index.html");
+              }
+          }
+          EOF
+
+          cat > app/src/main/assets/index.html <<'EOF'
+          <!DOCTYPE html>
+          <html lang="pt">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport"
+                    content="width=device-width, initial-scale=1">
+              <title>APK Forge</title>
+              <style>
+                  body {
+                      font-family: Arial, sans-serif;
+                      background: #101114;
+                      color: white;
+                      text-align: center;
+                      padding: 40px 20px;
+                  }
+                  .card {
+                      max-width: 400px;
+                      margin: 50px auto;
+                      padding: 25px;
+                      background: #202127;
+                      border-radius: 18px;
+                  }
+                  h1 { color: #69a7ff; }
+                  .ok {
+                      color: #54df91;
+                      font-weight: bold;
+                  }
+              </style>
+          </head>
+          <body>
+              <div class="card">
+                  <h1>APK Forge</h1>
+                  <p>Primeira aplicação Android</p>
+                  <p class="ok">Compilação concluída!</p>
+                  <p>Esta página HTML está a funcionar
+                     dentro de uma aplicação Android.</p>
