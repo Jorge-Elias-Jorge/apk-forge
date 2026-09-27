@@ -171,6 +171,9 @@ jobs:
                   <p class="ok">Compilação concluída!</p>
                   <p>Esta página HTML está a funcionar
                      dentro de uma aplicação Android.</p>
+      - name: Compilar APK
+        run: gradle assembleDebug
+
       - name: Guardar APK para download
         uses: actions/upload-artifact@v4
         with:
