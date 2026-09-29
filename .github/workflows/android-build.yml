@@ -4,17 +4,6 @@ name: APK Forge - Construir APK
 on:
   workflow_dispatch:
 
-permissions:
-  contents: read
-
-jobs:
-  build:
-    name: Construir APK
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Testar workflow
-        run: echo "O workflow APK Forge foi iniciado."
 name: APK Forge - Primeiro APK
 
 on:
