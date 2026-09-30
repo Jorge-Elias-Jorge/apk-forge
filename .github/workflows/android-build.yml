@@ -19,7 +19,7 @@ jobs:
           distribution: temurin
           java-version: '17'
 
- - name: Preparar Android SDK
+      - name: Preparar Android SDK
   run: |
     echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
     echo "PATH=$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH" >> "$GITHUB_ENV"
