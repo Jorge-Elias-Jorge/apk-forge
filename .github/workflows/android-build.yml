@@ -21,8 +21,7 @@ jobs:
 
       - name: Preparar Android SDK
   run: |
-    echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
-    echo "PATH=$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH" >> "$GITHUB_ENV"
+    echo
 
 - name: Aceitar licenças Android
   run: yes | sdkmanager --licenses > /dev/null || true
