@@ -1,4 +1,3 @@
-
 name: APK Forge - Kotlin Native
 
 on:
@@ -20,27 +19,49 @@ jobs:
           java-version: '17'
 
       - name: Preparar Android SDK
-  run: |
-    echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
-    echo "PATH=$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH" >> "$GITHUB_ENV"
+        shell: bash
+        run: |
+          export ANDROID_SDK_ROOT=/usr/local/lib/android/sdk
+          export ANDROID_HOME=$ANDROID_SDK_ROOT
 
-- name: Aceitar licenças Android
-  run: yes | sdkmanager --licenses > /dev/null || true
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "$ANDROID_SDK_ROOT/platform-tools" >> "$GITHUB_PATH"
 
-- name: Instalar componentes Android
-  run: |
-    sdkmanager "platform-tools"
-    sdkmanager "platforms;android-35"
-    sdkmanager "build-tools;35.0.0"
-     
- - name: Instalar Gradle
+          SDKMANAGER=$(find "$ANDROID_SDK_ROOT/cmdline-tools" \
+            -type f \
+            -name sdkmanager \
+            | sort -V \
+            | tail -n 1)
+
+          if [ -z "$SDKMANAGER" ]; then
+            echo "ERRO: sdkmanager não encontrado."
+            exit 1
+          fi
+
+          echo "SDKMANAGER=$SDKMANAGER"
+          echo "ANDROID SDK=$ANDROID_SDK_ROOT"
+
+          yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
+
+      - name: Instalar componentes Android
+        shell: bash
+        run: |
+          SDKMANAGER=$(find "$ANDROID_SDK_ROOT/cmdline-tools" \
+            -type f \
+            -name sdkmanager \
+            | sort -V \
+            | tail -n 1)
+
+          "$SDKMANAGER" \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0"
+
+      - name: Instalar Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-
-      - name: Instalar componentes Android
-        run: |
-          sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
       - name: Criar projeto Kotlin e XML
         shell: bash
@@ -49,7 +70,6 @@ jobs:
           mkdir -p app/src/main/res/layout
           mkdir -p app/src/main/res/drawable
           mkdir -p app/src/main/res/values
-          mkdir -p app/src/main/res/mipmap
 
           cat > settings.gradle <<'EOF'
           pluginManagement {
@@ -117,28 +137,36 @@ jobs:
           cat > app/src/main/AndroidManifest.xml <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
               <uses-permission android:name="android.permission.INTERNET" />
+
               <application
                   android:allowBackup="false"
                   android:label="APK Forge"
                   android:icon="@drawable/ic_forge"
                   android:theme="@style/AppTheme"
                   android:usesCleartextTraffic="true">
+
                   <activity
                       android:name=".MainActivity"
                       android:exported="true">
+
                       <intent-filter>
                           <action android:name="android.intent.action.MAIN" />
                           <category android:name="android.intent.category.LAUNCHER" />
                       </intent-filter>
+
                   </activity>
+
               </application>
+
           </manifest>
           EOF
 
           cat > app/src/main/res/values/colors.xml <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
+
               <color name="background">#080B12</color>
               <color name="surface">#121927</color>
               <color name="surface_alt">#1A2435</color>
@@ -148,47 +176,70 @@ jobs:
               <color name="text_secondary">#AAB5CA</color>
               <color name="border">#29364C</color>
               <color name="success">#55D995</color>
+
           </resources>
           EOF
+
           cat > app/src/main/res/values/styles.xml <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <resources>
+
               <style name="AppTheme" parent="@android:style/Theme.Material.NoActionBar">
+
                   <item name="android:fontFamily">sans</item>
                   <item name="android:colorAccent">@color/primary</item>
+
                   <item name="android:statusBarColor">@color/background</item>
                   <item name="android:navigationBarColor">@color/background</item>
+
                   <item name="android:windowLightStatusBar">false</item>
-                  <item name="android:windowActionModeOverlay">true</item>
-                  <item name="android:windowBackground">@color/background</item>
                   <item name="android:windowLightNavigationBar">false</item>
+
+                  <item name="android:windowBackground">@color/background</item>
+
               </style>
+
           </resources>
           EOF
 
           cat > app/src/main/res/drawable/bg_card.xml <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <shape xmlns:android="http://schemas.android.com/apk/res/android">
-              <solid android:color="@color/surface"/>
-              <corners android:radius="18dp"/>
-              <stroke android:width="1dp" android:color="@color/border"/>
+
+              <solid android:color="@color/surface" />
+
+              <corners android:radius="18dp" />
+
+              <stroke
+                  android:width="1dp"
+                  android:color="@color/border" />
+
           </shape>
           EOF
 
           cat > app/src/main/res/drawable/bg_button.xml <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <shape xmlns:android="http://schemas.android.com/apk/res/android">
-              <solid android:color="@color/primary"/>
-              <corners android:radius="14dp"/>
+
+              <solid android:color="@color/primary" />
+
+              <corners android:radius="14dp" />
+
           </shape>
           EOF
 
           cat > app/src/main/res/drawable/bg_input.xml <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <shape xmlns:android="http://schemas.android.com/apk/res/android">
-              <solid android:color="@color/background"/>
-              <corners android:radius="12dp"/>
-              <stroke android:width="1dp" android:color="@color/border"/>
+
+              <solid android:color="@color/background" />
+
+              <corners android:radius="12dp" />
+
+              <stroke
+                  android:width="1dp"
+                  android:color="@color/border" />
+
           </shape>
           EOF
 
@@ -199,23 +250,27 @@ jobs:
               android:height="48dp"
               android:viewportWidth="48"
               android:viewportHeight="48">
+
               <path
                   android:fillColor="#4D91FF"
-                  android:pathData="M24,2 L46,14.5 L46,33.5 L24,46 L2,33.5 L2,14.5 Z"/>
+                  android:pathData="M24,2 L46,14.5 L46,33.5 L24,46 L2,33.5 L2,14.5 Z" />
+
               <path
                   android:fillColor="#FFFFFF"
-                  android:pathData="M15,11 L33,11 L33,16 L20,16 L20,21 L31,21 L31,26 L20,26 L20,32 L34,32 L34,37 L15,37 Z"/>
+                  android:pathData="M15,11 L33,11 L33,16 L20,16 L20,21 L31,21 L31,26 L20,26 L20,32 L34,32 L34,37 L15,37 Z" />
+
           </vector>
           EOF
 
           cat > app/src/main/res/layout/activity_main.xml <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
-          <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+
+          <ScrollView
+              xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
               android:background="@color/background"
-              android:fillViewport="true"
-              android:clipToPadding="false">
+              android:fillViewport="true">
 
               <LinearLayout
                   android:layout_width="match_parent"
@@ -235,7 +290,7 @@ jobs:
                           android:layout_width="48dp"
                           android:layout_height="48dp"
                           android:src="@drawable/ic_forge"
-                          android:contentDescription="APK Forge"/>
+                          android:contentDescription="APK Forge" />
 
                       <LinearLayout
                           android:layout_width="0dp"
@@ -250,7 +305,7 @@ jobs:
                               android:text="APK Forge"
                               android:textColor="@color/text_primary"
                               android:textSize="22sp"
-                              android:textStyle="bold"/>
+                              android:textStyle="bold" />
 
                           <TextView
                               android:layout_width="wrap_content"
@@ -258,7 +313,8 @@ jobs:
                               android:text="ANDROID APP BUILDER"
                               android:textColor="@color/text_secondary"
                               android:textSize="10sp"
-                              android:letterSpacing="0.12"/>
+                              android:letterSpacing="0.12" />
+
                       </LinearLayout>
 
                       <TextView
@@ -270,8 +326,10 @@ jobs:
                           android:text="⚙"
                           android:textColor="@color/text_primary"
                           android:textSize="22sp"
-                          android:contentDescription="Definições"/>
+                          android:contentDescription="Definições" />
+
                   </LinearLayout>
+
                   <TextView
                       android:layout_width="match_parent"
                       android:layout_height="wrap_content"
@@ -279,7 +337,7 @@ jobs:
                       android:textColor="@color/text_primary"
                       android:textSize="27sp"
                       android:textStyle="bold"
-                      android:lineSpacingExtra="4dp"/>
+                      android:lineSpacingExtra="4dp" />
 
                   <TextView
                       android:layout_width="match_parent"
@@ -289,7 +347,7 @@ jobs:
                       android:text="Importa um projeto, personaliza a identidade e prepara o teu APK Android."
                       android:textColor="@color/text_secondary"
                       android:textSize="15sp"
-                      android:lineSpacingExtra="3dp"/>
+                      android:lineSpacingExtra="3dp" />
 
                   <TextView
                       android:layout_width="match_parent"
@@ -299,7 +357,7 @@ jobs:
                       android:textSize="12sp"
                       android:textStyle="bold"
                       android:letterSpacing="0.1"
-                      android:layout_marginBottom="12dp"/>
+                      android:layout_marginBottom="12dp" />
 
                   <LinearLayout
                       android:id="@+id/websiteCard"
@@ -320,7 +378,7 @@ jobs:
                           android:gravity="center"
                           android:text="◎"
                           android:textColor="@color/primary"
-                          android:textSize="30sp"/>
+                          android:textSize="30sp" />
 
                       <LinearLayout
                           android:layout_width="0dp"
@@ -335,7 +393,7 @@ jobs:
                               android:text="Website"
                               android:textColor="@color/text_primary"
                               android:textSize="17sp"
-                              android:textStyle="bold"/>
+                              android:textStyle="bold" />
 
                           <TextView
                               android:layout_width="match_parent"
@@ -343,7 +401,8 @@ jobs:
                               android:layout_marginTop="5dp"
                               android:text="Converter um endereço web"
                               android:textColor="@color/text_secondary"
-                              android:textSize="13sp"/>
+                              android:textSize="13sp" />
+
                       </LinearLayout>
 
                       <TextView
@@ -351,7 +410,8 @@ jobs:
                           android:layout_height="wrap_content"
                           android:text="›"
                           android:textColor="@color/text_secondary"
-                          android:textSize="30sp"/>
+                          android:textSize="30sp" />
+
                   </LinearLayout>
 
                   <LinearLayout
@@ -374,7 +434,7 @@ jobs:
                           android:text="&lt;/&gt;"
                           android:textColor="@color/primary"
                           android:textSize="19sp"
-                          android:textStyle="bold"/>
+                          android:textStyle="bold" />
 
                       <LinearLayout
                           android:layout_width="0dp"
@@ -389,7 +449,7 @@ jobs:
                               android:text="Código HTML"
                               android:textColor="@color/text_primary"
                               android:textSize="17sp"
-                              android:textStyle="bold"/>
+                              android:textStyle="bold" />
 
                           <TextView
                               android:layout_width="match_parent"
@@ -397,7 +457,8 @@ jobs:
                               android:layout_marginTop="5dp"
                               android:text="Importar ficheiro ou colar código"
                               android:textColor="@color/text_secondary"
-                              android:textSize="13sp"/>
+                              android:textSize="13sp" />
+
                       </LinearLayout>
 
                       <TextView
@@ -405,7 +466,8 @@ jobs:
                           android:layout_height="wrap_content"
                           android:text="›"
                           android:textColor="@color/text_secondary"
-                          android:textSize="30sp"/>
+                          android:textSize="30sp" />
+
                   </LinearLayout>
 
                   <LinearLayout
@@ -427,7 +489,8 @@ jobs:
                           android:gravity="center"
                           android:text="▤"
                           android:textColor="@color/primary"
-                          android:textSize="28sp"/>
+                          android:textSize="28sp" />
+
                       <LinearLayout
                           android:layout_width="0dp"
                           android:layout_height="wrap_content"
@@ -441,7 +504,7 @@ jobs:
                               android:text="Projeto ZIP"
                               android:textColor="@color/text_primary"
                               android:textSize="17sp"
-                              android:textStyle="bold"/>
+                              android:textStyle="bold" />
 
                           <TextView
                               android:layout_width="match_parent"
@@ -449,15 +512,16 @@ jobs:
                               android:layout_marginTop="5dp"
                               android:text="Selecionar um projeto completo"
                               android:textColor="@color/text_secondary"
-                              android:textSize="13sp"/>
+                              android:textSize="13sp" />
+
                       </LinearLayout>
 
                       <TextView
                           android:layout_width="wrap_content"
                           android:layout_height="wrap_content"
-                          android:text="›"
-                          android:textColor="@color/text_secondary"
-                          android:textSize="30sp"/>
+                         android:textColor="@color/text_secondary"
+                          android:textSize="30sp" />
+
                   </LinearLayout>
 
                   <TextView
@@ -468,7 +532,7 @@ jobs:
                       android:textSize="12sp"
                       android:textStyle="bold"
                       android:letterSpacing="0.1"
-                      android:layout_marginBottom="12dp"/>
+                      android:layout_marginBottom="12dp" />
 
                   <LinearLayout
                       android:layout_width="match_parent"
@@ -484,7 +548,7 @@ jobs:
                           android:text="Pronto para criar um projeto"
                           android:textColor="@color/success"
                           android:textSize="15sp"
-                          android:textStyle="bold"/>
+                          android:textStyle="bold" />
 
                       <TextView
                           android:id="@+id/detailText"
@@ -493,7 +557,8 @@ jobs:
                           android:layout_marginTop="8dp"
                           android:text="Seleciona um dos métodos de importação acima."
                           android:textColor="@color/text_secondary"
-                          android:textSize="13sp"/>
+                          android:textSize="13sp" />
+
                   </LinearLayout>
 
                   <TextView
@@ -508,7 +573,7 @@ jobs:
                       android:textSize="16sp"
                       android:textStyle="bold"
                       android:clickable="true"
-                      android:focusable="true"/>
+                      android:focusable="true" />
 
                   <TextView
                       android:layout_width="match_parent"
@@ -518,9 +583,10 @@ jobs:
                       android:gravity="center"
                       android:text="APK Forge • Android Native"
                       android:textColor="@color/text_secondary"
-                      android:textSize="12sp"/>
+                      android:textSize="12sp" />
 
               </LinearLayout>
+
           </ScrollView>
           EOF
 
@@ -528,69 +594,26 @@ jobs:
           package com.jorge.apkforge
 
           import android.app.Activity
-          import android.os.Bundle
+          import android.app.AlertDialog
           import android.content.Intent
           import android.net.Uri
-          import android.widget.LinearLayout
+          import android.os.Bundle
+          import android.text.InputType
+          import android.view.Gravity
+          import android.view.View
+          import android.widget.EditText
+          import android.widget.ScrollView
           import android.widget.TextView
           import android.widget.Toast
-          import android.view.View
-          import android.view.Gravity
-          import android.graphics.Color
-          import android.graphics.Typeface
-          import android.graphics.drawable.GradientDrawable
-          import android.view.ViewGroup
-          import android.widget.EditText
-          import android.widget.Button
-          import android.widget.ScrollView
-          import android.widget.ImageView
-          import android.widget.ImageButton
-          import android.app.AlertDialog
-          import android.text.InputType
-          import android.content.ActivityNotFoundException
 
           class MainActivity : Activity() {
 
               private lateinit var statusText: TextView
               private lateinit var detailText: TextView
 
-              private val pickHtml =
-                  registerForActivityResult(
-                      androidXActivityResultContract()
-                  ) { uri: Uri? ->
-                      if (uri != null) {
-                          contentResolver.takePersistableUriPermission(
-                              uri,
-                              Intent.FLAG_GRANT_READ_URI_PERMISSION
-                          )
-                          statusText.text = "Ficheiro selecionado"
-                          detailText.text = uri.lastPathSegment ?: "HTML selecionado"
-                          Toast.makeText(
-                              this,
-                              "Ficheiro selecionado com sucesso.",
-                              Toast.LENGTH_SHORT
-                          ).show()
-                      }
-                  }
-
-              private val pickZip =
-                  registerForActivityResult(
-                      androidXActivityResultContract()
-                  ) { uri: Uri? ->
-                      if (uri != null) {
-                          statusText.text = "Projeto ZIP selecionado"
-                          detailText.text = uri.lastPathSegment ?: "ZIP selecionado"
-                          Toast.makeText(
-                              this,
-                              "ZIP selecionado. A integração de compilação será adicionada na próxima etapa.",
-                              Toast.LENGTH_LONG
-                          ).show()
-                      }
-                  }
-
-              private fun androidXActivityResultContract():
-                  androidx.activity.result.contract.ActivityResultContracts.GetContent {
-                  return androidx.activity.result.contract.ActivityResultContracts.GetContent()
+              companion object {
+                  private const val PICK_HTML = 101
+                  private const val PICK_ZIP = 102
               }
 
               override fun onCreate(savedInstanceState: Bundle?) {
@@ -609,7 +632,7 @@ jobs:
                   }
 
                   findViewById<View>(R.id.zipCard).setOnClickListener {
-                      pickZip.launch("application/zip")
+                      selectFile(PICK_ZIP)
                   }
 
                   findViewById<View>(R.id.settingsButton).setOnClickListener {
@@ -621,41 +644,131 @@ jobs:
                   }
               }
 
+              private fun selectFile(requestCode: Int) {
+                  val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+
+                  intent.addCategory(Intent.CATEGORY_OPENABLE)
+
+                  intent.type = when (requestCode) {
+                      PICK_HTML -> "text/html"
+                      else -> "application/zip"
+                  }
+
+                  try {
+                      startActivityForResult(intent, requestCode)
+                  } catch (e: Exception) {
+                      Toast.makeText(
+                          this,
+                          "Não foi possível abrir o seletor de ficheiros.",
+                          Toast.LENGTH_LONG
+                      ).show()
+                  }
+              }
+
+              @Deprecated("Compatibilidade com Android")
+              override fun onActivityResult(
+                  requestCode: Int,
+                  resultCode: Int,
+                  data: Intent?
+              ) {
+                  super.onActivityResult(
+                      requestCode,
+                      resultCode,
+                      data
+                  )
+
+                  if (resultCode != RESULT_OK || data?.data == null) {
+                      return
+                  }
+
+                  val uri = data.data!!
+
+                  try {
+                      contentResolver.takePersistableUriPermission(
+                          uri,
+                          Intent.FLAG_GRANT_READ_URI_PERMISSION
+                      )
+                  } catch (_: Exception) {
+                  }
+
+                  when (requestCode) {
+
+                      PICK_HTML -> {
+                          statusText.text = "Ficheiro HTML selecionado"
+
+                          detailText.text =
+                              uri.lastPathSegment ?: "HTML selecionado"
+                      }
+
+                      PICK_ZIP -> {
+                          statusText.text = "Projeto ZIP selecionado"
+
+                          detailText.text =
+                              uri.lastPathSegment ?: "ZIP selecionado"
+                      }
+                  }
+
+                  Toast.makeText(
+                      this,
+                      "Ficheiro selecionado.",
+                      Toast.LENGTH_SHORT
+                  ).show()
+              }
+
               private fun showWebsiteDialog() {
                   val input = EditText(this)
+
                   input.hint = "https://exemplo.com"
-                  input.inputType = InputType.TYPE_TEXT_VARIATION_URI
+
+                  input.inputType =
+                      InputType.TYPE_CLASS_TEXT or
+                      InputType.TYPE_TEXT_VARIATION_URI
                   input.setSingleLine(true)
 
                   AlertDialog.Builder(this)
                       .setTitle("Adicionar website")
-                      .setMessage("Introduz o endereço do website.")
+                      .setMessage(
+                          "Introduz o endereço do website."
+                      )
                       .setView(input)
-                      .setNegativeButton("Cancelar", null)
-                      .setPositiveButton("Continuar") { _, _ ->
-                          var url = input.text.toString().trim()
+                      .setNegativeButton(
+                          "Cancelar",
+                          null
+                      )
+                      .setPositiveButton(
+                          "Continuar"
+                      ) { _, _ ->
+
+                          var url =
+                              input.text.toString().trim()
 
                           if (url.isEmpty()) {
+
                               Toast.makeText(
                                   this,
                                   "Introduz um endereço.",
                                   Toast.LENGTH_SHORT
                               ).show()
+
                               return@setPositiveButton
                           }
 
-                          if (!url.startsWith("https://") &&
-                              !url.startsWith("http://")) {
+                          if (
+                              !url.startsWith("https://") &&
+                              !url.startsWith("http://")
+                          ) {
                               url = "https://$url"
                           }
 
-                          statusText.text = "Website selecionado"
+                          statusText.text =
+                              "Website selecionado"
+
                           detailText.text = url
 
                           Toast.makeText(
                               this,
-                              "Endereço guardado. A integração de compilação será adicionada na próxima etapa.",
-                              Toast.LENGTH_LONG
+                              "Endereço guardado.",
+                              Toast.LENGTH_SHORT
                           ).show()
                       }
                       .show()
@@ -665,16 +778,130 @@ jobs:
                   AlertDialog.Builder(this)
                       .setTitle("Importar HTML")
                       .setItems(
-                          arrayOf("Selecionar ficheiro HTML", "Colar código HTML")
+                          arrayOf(
+                              "Selecionar ficheiro HTML",
+                              "Colar código HTML"
+                          )
                       ) { _, which ->
+
                           if (which == 0) {
-                              pickHtml.launch("text/html")
+                              selectFile(PICK_HTML)
                           } else {
                               showHtmlEditor()
                           }
                       }
-                      .setNegativeButton("Cancelar", null)
+                      .setNegativeButton(
+                          "Cancelar",
+                          null
+                      )
                       .show()
               }
 
-              private fun
+              private fun showHtmlEditor() {
+                  val input = EditText(this)
+
+                  input.hint =
+                      "Cola aqui o código HTML"
+
+                  input.minLines = 8
+
+                  input.gravity = Gravity.TOP
+
+                  input.inputType =
+                      InputType.TYPE_CLASS_TEXT or
+                      InputType.TYPE_TEXT_FLAG_MULTI_LINE
+
+                  val scroll = ScrollView(this)
+
+                  scroll.addView(input)
+
+                  AlertDialog.Builder(this)
+                      .setTitle("Colar código HTML")
+                      .setView(scroll)
+                      .setNegativeButton(
+                          "Cancelar",
+                          null
+                      )
+                      .setPositiveButton(
+                          "Guardar"
+                      ) { _, _ ->
+
+                          val html =
+                              input.text.toString()
+
+                          if (html.isNotBlank()) {
+
+                              statusText.text =
+                                  "Código HTML introduzido"
+
+                              detailText.text =
+                                  "${html.length} caracteres de código"
+
+                              Toast.makeText(
+                                  this,
+                                  "Código recebido.",
+                                  Toast.LENGTH_SHORT
+                              ).show()
+                          }
+                      }
+                      .show()
+              }
+
+              private fun showSettings() {
+                  AlertDialog.Builder(this)
+                      .setTitle("Definições")
+                      .setMessage(
+                          "APK Forge\n\n" +
+                          "Versão 1.0.0\n" +
+                          "Interface Android nativa\n" +
+                          "Kotlin + XML"
+                      )
+                      .setPositiveButton(
+                          "Fechar",
+                          null
+                      )
+                      .show()
+              }
+
+              private fun showProjects() {
+                  AlertDialog.Builder(this)
+                      .setTitle("Os meus projetos")
+                      .setMessage(
+                          "Ainda não existem projetos guardados. " +
+                          "A gestão persistente será adicionada numa próxima etapa."
+                      )
+                      .setPositiveButton(
+                          "OK",
+                          null
+                      )
+                      .show()
+              }
+          }
+          EOF
+
+      - name: Verificar projeto
+        shell: bash
+        run: |
+          echo "Verificando estrutura do projeto..."
+          find app/src/main -maxdepth 3 -type f | sort
+          echo "Gradle:"
+          gradle --version
+
+      - name: Compilar APK
+        shell: bash
+        run: |
+          gradle --no-daemon --stacktrace assembleDebug
+
+      - name: Verificar APK
+        shell: bash
+        run: |
+          echo "APK produzido:"
+          ls -lh app/build/outputs/apk/debug/
+          test -f app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Guardar APK para download
+        uses: actions/upload-artifact@v4
+        with:
+          name: APK-Forge-debug
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
